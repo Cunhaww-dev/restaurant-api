@@ -14,7 +14,7 @@ class ProductController {
   async create(request: Request, response: Response, next: NextFunction) {
     try {
       const bodySchema = z.object({
-        name: z.string().trim().min(4, 'Name must be at least 4 characters'),
+        name: z.string().trim().min(5, 'Name must be at least 4 characters'),
         price: z.number().gt(0, 'Price must be greater than 0'),
       });
 
