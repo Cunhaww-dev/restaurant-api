@@ -38,3 +38,7 @@ coverage/
 
 # Arquivos locais
 *.local
+
+# Agente
+.codex
+
