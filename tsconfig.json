@@ -1,47 +1,18 @@
-// {
-//   "compilerOptions": {
-//     "target": "ES2024", // Define para qual versao do JavaScript o TypeScript vai compilar.
-//     "lib": ["ES2024"], // Libera os tipos das APIs modernas do JavaScript disponiveis nesse padrao.
-
-//     "module": "NodeNext", // Faz o TS seguir o comportamento de modulos do Node moderno.
-//     "moduleResolution": "NodeNext", // Resolve imports do mesmo jeito que o Node faz.
-
-//     "types": ["node"], // Carrega os tipos globais do Node, como process, Buffer e __dirname.
-
-//     "rootDir": "src", // Indica onde fica o codigo-fonte da aplicacao.
-//     "outDir": "dist", // Indica onde o JavaScript compilado sera gerado.
-
-//     "esModuleInterop": true, // Melhora a compatibilidade ao importar pacotes CommonJS, como o Express.
-//     "forceConsistentCasingInFileNames": true, // Evita problemas com maiusculas/minusculas em nomes de arquivos.
-
-//     "strict": true, // Ativa as checagens mais rigidas de tipos.
-//     "exactOptionalPropertyTypes": true, // Diferencia propriedade opcional de propriedade com valor undefined.
-
-//     "skipLibCheck": true, // Ignora a checagem de tipos dentro das bibliotecas para compilar mais rapido.
-//     "sourceMap": true // Gera .map para facilitar debug em desenvolvimento.
-//   },
-//   "include": ["src/**/*.ts"], // Compila apenas os arquivos TypeScript da pasta src.
-//   "exclude": ["node_modules", "dist"] // Ignora dependencias e arquivos gerados.
-// }
-
 {
   "compilerOptions": {
-    "target": "ES2024", // Define para qual versao do JavaScript o TypeScript vai compilar.
-    "lib": ["ES2024"], // Libera os tipos das APIs modernas do JavaScript disponiveis nesse padrao.
-
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "paths": {
-      "@/*": ["./src/*"] // Permite usar @/ para importar arquivos da pasta src.
+      "@/*": ["./src/*"]
     },
-
-    "module": "nodenext", // Faz o TS seguir o comportamento de modulos do Node moderno. 
-    "esModuleInterop": true, // Melhora a compatibilidade ao importar pacotes CommonJS, como o Express.
-    "forceConsistentCasingInFileNames": true, // Evita problemas com maiusculas/minusculas em nomes de arquivos.
-
-    "strict": true, // Ativa as checagens mais rigidas de tipos.
-    "skipLibCheck": true, // Ignora a checagem de tipos dentro das bibliotecas para compilar mais rapido.
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
   },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
-
-
-
 
