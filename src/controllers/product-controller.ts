@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { knex } from "@/database/knex";
 import { ProductInsert, ProductRow } from "@/database/types/product-types";
-import { AppError } from '@/utils/AppError';
+import { AppError } from "@/utils/AppError";
 
 class ProductController {
   // Listagem ordenada com filtro por nome
@@ -71,7 +71,7 @@ class ProductController {
         .update({ name, price, updated_at: knex.fn.now() })
         .returning("*");
 
-        // Se o produto não for encontrado, retornamos um erro 404 para o cliente, indicando que o recurso solicitado não existe
+      // Se o produto não for encontrado, retornamos um erro 404 para o cliente, indicando que o recurso solicitado não existe
       if (!updatedData) {
         throw new AppError("Product not found", 404);
       }
@@ -79,6 +79,32 @@ class ProductController {
       return response.status(200).json({
         message: "Product updated successfully",
         product: updatedData,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async remove(request: Request, response: Response, next: NextFunction) {
+    try {
+      const paramsSchema = z.object({
+        id: z.coerce.number().int().positive("ID must be a positive integer"),
+      });
+
+      const { id } = paramsSchema.parse(request.params);
+
+      const [deletedData] = await knex<ProductRow>("products")
+        .where({ id })
+        .delete()
+        .returning("*");
+
+      if (!deletedData) {
+        throw new AppError("Product not found", 404);
+      }
+
+      return response.status(200).json({
+        message: "Product deleted successfully",
+        product: deletedData,
       });
     } catch (error) {
       next(error);
