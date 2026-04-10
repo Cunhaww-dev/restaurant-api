@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { knex } from '@/database/knex';
 import { productsRoutes } from './products-routes';
 import { tablesRoutes } from './tables-routes';
+import { tablesSessionsRoutes } from './tables-session-routes';
 
 const routes = Router();
 
@@ -20,5 +21,6 @@ routes.get('/health/db', async (_request, response, next) => {
 
 routes.use('/products', productsRoutes);
 routes.use('/tables', tablesRoutes);
+routes.use('/tables-sessions', tablesSessionsRoutes);
 
 export { routes };
