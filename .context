@@ -1,0 +1,26 @@
+# Contexto do projeto
+
+Projeto: restaurant-api
+Stack: Node.js, TypeScript, Express, Knex, PostgreSQL e Zod.
+
+Padrao de documentacao:
+- Escrever documentacoes em PT-BR para uso no Obsidian.
+- Usar arquivos `.md` dentro de `docs/`.
+- Usar blocos de codigo com 4 crases e linguagem explicita, como `bash`, `ts` e `json`.
+- Explicar primeiro o objetivo, depois mostrar comando/codigo e em seguida explicar o resultado.
+- Incluir comandos utilizados no terminal quando o usuario enviar logs.
+- Separar comando e output quando isso deixar a leitura mais clara.
+- Usar nomes de arquivos em negrito, por exemplo **tables-controller.ts**.
+- Evitar sequencias com mais de uma linha vazia entre secoes para nao gerar trabalho extra ao copiar para o Obsidian.
+- Para imagens do Obsidian, usar o formato `![[Pasted image ...png]]`.
+
+Fluxo comum para novas features:
+- Migration, quando houver alteracao no banco.
+- Seed, quando fizer sentido popular dados iniciais.
+- Types.
+- Controller.
+- Routes.
+- Registro no index de rotas.
+- Teste ou comando usado para validar.
+
+Guia detalhado: docs/padrao-documentacao-obsidian.md
