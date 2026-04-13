@@ -16,12 +16,12 @@ export class TablesSessionsController {
 
       const { table_id } = bodySchema.parse(request.body);
 
-      const session = await knex<TableSessionRow>('tables_sessions')
+      const openSession = await knex<TableSessionRow>('tables_sessions')
         .where({ table_id })
         .whereNull('closed_at')
         .first();
 
-      if (session && !session.closed_at) {
+      if (openSession) {
         throw new AppError(
           'There is already an open session for this table',
           400,
