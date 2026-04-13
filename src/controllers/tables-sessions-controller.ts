@@ -47,4 +47,29 @@ export class TablesSessionsController {
       next(error);
     }
   }
+
+  // Listar sessões de mesas, ordenando por data de fechamento (closed_at) para mostrar primeiro as sessões mais antigas
+  async index(request: Request, response: Response, next: NextFunction) {
+    try {
+      const sessions = await knex<TableSessionRow>('tables_sessions').orderBy(
+        'closed_at',
+        'asc',
+      );
+
+      return response.json({ sessions });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Encerrar sessão de uma mesa
+  async update(request: Request, response: Response, next: NextFunction) {
+    try {
+      id: z.coerce.number().int().positive('ID must be a positive integer');
+
+      return response.status(200).json();
+    } catch (error) {
+      next(error);
+    }
+  }
 }
