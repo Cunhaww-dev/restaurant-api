@@ -4,8 +4,9 @@ import { TablesSessionsController } from '@/controllers/tables-sessions-controll
 const tablesSessionsRoutes = Router();
 const tablesSessionsController = new TablesSessionsController();
 
+// Listar sessões de mesas, com filtro opcional por status (open/closed) e limite opcional
 tablesSessionsRoutes.get('/', tablesSessionsController.index);
 tablesSessionsRoutes.post('/', tablesSessionsController.create);
-tablesSessionsRoutes.put('/:id', tablesSessionsController.update);
+tablesSessionsRoutes.patch('/:id', tablesSessionsController.update);
 
 export { tablesSessionsRoutes };
