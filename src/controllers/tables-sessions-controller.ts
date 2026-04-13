@@ -48,13 +48,38 @@ export class TablesSessionsController {
     }
   }
 
-  // Listar sessões de mesas, ordenando por data de fechamento (closed_at) para mostrar primeiro as sessões mais antigas
+  // Listar sessões de mesas, com filtro opcional por status
   async index(request: Request, response: Response, next: NextFunction) {
     try {
-      const sessions = await knex<TableSessionRow>('tables_sessions').orderBy(
-        'closed_at',
-        'asc',
-      );
+      const querySchema = z.object({
+        status: z.enum(['open', 'closed']).optional(),
+        // Limit opcional para evitar respostas muito grandes no front-end.
+        limit: z.coerce.number().int().positive().max(100).default(50),
+      });
+
+      const { status, limit } = querySchema.parse(request.query);
+
+      const query = knex<TableSessionRow>('tables_sessions');
+
+      if (status === 'open') {
+        const sessions = await query
+          .whereNull('closed_at')
+          .orderBy('opened_at', 'desc')
+          .limit(limit);
+
+        return response.json({ sessions });
+      }
+
+      if (status === 'closed') {
+        const sessions = await query
+          .whereNotNull('closed_at')
+          .orderBy('closed_at', 'desc')
+          .limit(limit);
+
+        return response.json({ sessions });
+      }
+
+      const sessions = await query.orderBy('opened_at', 'desc').limit(limit);
 
       return response.json({ sessions });
     } catch (error) {
@@ -65,9 +90,36 @@ export class TablesSessionsController {
   // Encerrar sessão de uma mesa
   async update(request: Request, response: Response, next: NextFunction) {
     try {
-      id: z.coerce.number().int().positive('ID must be a positive integer');
+      const paramsSchema = z.object({
+        id: z.coerce.number().int().positive('ID must be a positive integer'),
+      });
 
-      return response.status(200).json();
+      const { id } = paramsSchema.parse(request.params);
+
+      const session = await knex<TableSessionRow>('tables_sessions')
+        .where({ id })
+        .first();
+
+      if (!session) {
+        throw new AppError(`Table session with id ${id} not found`, 404);
+      }
+
+      if (session.closed_at) {
+        throw new AppError(
+          `Table session with id ${id} is already closed at ${session.closed_at}`,
+          400,
+        );
+      }
+
+      const [updatedSession] = await knex<TableSessionRow>('tables_sessions')
+        .where({ id })
+        .update({ closed_at: knex.fn.now() })
+        .returning('*');
+
+      return response.status(200).json({
+        message: 'Table session closed successfully',
+        session: updatedSession,
+      });
     } catch (error) {
       next(error);
     }
