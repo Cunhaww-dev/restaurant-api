@@ -1,6 +1,6 @@
 import express from 'express';
 import swaggerUi from 'swagger-ui-express';
-import { document } from './docs/openapi';
+import { document } from './docs/swagger/openapi';
 import { routes } from './routes';
 import { errorHandlingMiddleware } from './middlewares/error-handling';
 
