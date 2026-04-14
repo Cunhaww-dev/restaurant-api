@@ -3,18 +3,14 @@ import { z } from 'zod';
 import { knex } from '@/database/knex';
 import { TableSessionRow } from '@/database/types/table-sessions-types';
 import { AppError } from '@/utils/AppError';
+import { createTableSessionSchema } from '@/schemas/tables-sessions/create-table-session.schema';
+import { idParamSchema } from '@/schemas/common/params.schema';
+import { queryTableSessionSchema } from '@/schemas/tables-sessions/query-table-session.schema';
 
 export class TablesSessionsController {
   async create(request: Request, response: Response, next: NextFunction) {
     try {
-      const bodySchema = z.object({
-        table_id: z.coerce
-          .number()
-          .int()
-          .positive('Table ID must be a positive integer'),
-      });
-
-      const { table_id } = bodySchema.parse(request.body);
+      const { table_id } = createTableSessionSchema.parse(request.body);
 
       const openSession = await knex<TableSessionRow>('tables_sessions')
         .where({ table_id })
@@ -51,13 +47,7 @@ export class TablesSessionsController {
   // Listar sessões de mesas, com filtro opcional por status
   async index(request: Request, response: Response, next: NextFunction) {
     try {
-      const querySchema = z.object({
-        status: z.enum(['open', 'closed']).optional(),
-        // Limit opcional para evitar respostas muito grandes no front-end.
-        limit: z.coerce.number().int().positive().max(100).default(50),
-      });
-
-      const { status, limit } = querySchema.parse(request.query);
+      const { status, limit } = queryTableSessionSchema.parse(request.query);
 
       const query = knex<TableSessionRow>('tables_sessions');
 
@@ -90,11 +80,7 @@ export class TablesSessionsController {
   // Encerrar sessão de uma mesa
   async update(request: Request, response: Response, next: NextFunction) {
     try {
-      const paramsSchema = z.object({
-        id: z.coerce.number().int().positive('ID must be a positive integer'),
-      });
-
-      const { id } = paramsSchema.parse(request.params);
+      const { id } = idParamSchema.parse(request.params);
 
       const session = await knex<TableSessionRow>('tables_sessions')
         .where({ id })
