@@ -64,6 +64,7 @@ export class OrdersController {
     }
   }
 
+  // metodo para listar os pedidos de uma sessão de mesa
   async index(request: Request, response: Response, next: NextFunction) {
     try {
       const { table_session_id } = request.params;
@@ -76,12 +77,36 @@ export class OrdersController {
           'products.name',
           'orders.unit_price',
           'orders.quantity',
+          knex.raw('(orders.unit_price * orders.quantity) AS total_price'),
+          'orders.created_at',
+          'orders.updated_at',
         )
         .join('products', 'orders.product_id', 'products.id')
-        .where({ table_session_id });
+        .where({ table_session_id })
+        .orderBy('orders.created_at', 'desc');
       return response.json({
         orders,
       });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Reusmo da conta/valor total do pedido.
+  async show(request: Request, response: Response, next: NextFunction) {
+    try {
+      const { table_session_id } = request.params;
+
+      const [order] = await knex('orders')
+        .select(
+          knex.raw(
+            'COALESCE(SUM(orders.unit_price * orders.quantity), 0) AS total_amount',
+          ),
+          knex.raw('COALESCE(SUM(orders.quantity), 0) AS total_items'),
+        )
+        .where({ table_session_id });
+
+      return response.json(order);
     } catch (error) {
       next(error);
     }
