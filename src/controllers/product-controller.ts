@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from 'express';
-import { z } from 'zod';
 import { knex } from '@/database/knex';
 import { ProductInsert, ProductRow } from '@/database/types/product-types';
 import { AppError } from '@/utils/AppError';

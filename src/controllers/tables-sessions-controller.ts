@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
 import { knex } from '@/database/knex';
 import { TableSessionRow } from '@/database/types/table-sessions-types';
 import { AppError } from '@/utils/AppError';
