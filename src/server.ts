@@ -13,4 +13,9 @@ app.use('/docs', swaggerUi.serve, swaggerUi.setup(document));
 // Usando o Middleware de tratamento de erros, ele deve ser o último a ser registrado, para que ele capture os erros de todas as rotas e middlewares anteriores
 app.use(errorHandlingMiddleware);
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(
+    `Swagger documentation available at http://localhost:${PORT}/docs`,
+  );
+});
