@@ -2,23 +2,16 @@ import { knex } from '@/database/knex';
 import { OrderRow } from '@/database/types/order-types';
 import { ProductRow } from '@/database/types/product-types';
 import { TableSessionRow } from '@/database/types/table-sessions-types';
+import { createOrderSchema } from '@/schemas/order/create-order.schema';
+import { queryOrdersParamsSchema } from '@/schemas/order/query-orders.schema';
 import { AppError } from '@/utils/AppError';
 import { Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
 
 export class OrdersController {
   async create(request: Request, response: Response, next: NextFunction) {
     try {
-      const bodySchema = z.object({
-        table_session_id: z.coerce.number().int().positive(),
-        product_id: z.coerce.number().int().positive(),
-        quantity: z.coerce.number().int().positive().default(1),
-        //   unit_price: z.number().positive(),
-      });
-
-      const { table_session_id, product_id, quantity } = bodySchema.parse(
-        request.body,
-      );
+      const { table_session_id, product_id, quantity } =
+        createOrderSchema.parse(request.body);
 
       const session = await knex<TableSessionRow>('tables_sessions')
         .where({ id: table_session_id })
@@ -67,7 +60,9 @@ export class OrdersController {
   // metodo para listar os pedidos de uma sessão de mesa
   async index(request: Request, response: Response, next: NextFunction) {
     try {
-      const { table_session_id } = request.params;
+      const { table_session_id } = queryOrdersParamsSchema.parse(
+        request.params,
+      );
 
       const orders = await knex('orders')
         .select(
@@ -95,7 +90,9 @@ export class OrdersController {
   // Reusmo da conta/valor total do pedido.
   async show(request: Request, response: Response, next: NextFunction) {
     try {
-      const { table_session_id } = request.params;
+      const { table_session_id } = queryOrdersParamsSchema.parse(
+        request.params,
+      );
 
       const [order] = await knex('orders')
         .select(

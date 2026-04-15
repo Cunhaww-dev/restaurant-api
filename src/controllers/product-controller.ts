@@ -1,19 +1,18 @@
 import { NextFunction, Request, Response } from 'express';
-import { z } from 'zod';
 import { knex } from '@/database/knex';
 import { ProductInsert, ProductRow } from '@/database/types/product-types';
 import { AppError } from '@/utils/AppError';
+import { createProductSchema } from '@/schemas/product/create-product.schema';
+import { updateProductSchema } from '@/schemas/product/update-product.schema';
+import { idParamSchema } from '@/schemas/common/params.schema';
+import { queryProductSchema } from '@/schemas/product/query-product.schema';
 
 class ProductController {
   // Listagem ordenada com filtro por nome
   async index(request: Request, response: Response, next: NextFunction) {
     try {
       // Aqui a ideia é manter a busca simples, mas já validar a query e só filtrar quando vier um nome.
-      const querySchema = z.object({
-        name: z.string().trim().optional(),
-      });
-
-      const { name } = querySchema.parse(request.query);
+      const { name } = queryProductSchema.parse(request.query);
       const query = knex<ProductRow>('products')
         .select()
         .orderBy('name', 'asc');
@@ -32,12 +31,7 @@ class ProductController {
 
   async create(request: Request, response: Response, next: NextFunction) {
     try {
-      const bodySchema = z.object({
-        name: z.string().trim().min(5, 'Name must be at least 5 characters'),
-        price: z.number().gt(0, 'Price must be greater than 0'),
-      });
-
-      const { name, price } = bodySchema.parse(request.body); // parse lança um erro se a validação falhar
+      const { name, price } = createProductSchema.parse(request.body); // parse lança um erro se a validação falhar
 
       const [productExists] = await knex<ProductRow>('products').whereRaw(
         'LOWER(name) = ?',
@@ -60,19 +54,8 @@ class ProductController {
 
   async update(request: Request, response: Response, next: NextFunction) {
     try {
-      // Validação dos parâmetros da requisição usando Zod'
-      const paramsSchema = z.object({
-        id: z.coerce.number().int().positive('ID must be a positive integer'),
-      });
-
-      // Validação do corpo da requisição para garantir que os dados estão corretos antes de tentar atualizar o produto
-      const bodySchema = z.object({
-        name: z.string().trim().min(5, 'Name must be at least 5 characters'),
-        price: z.number().gt(0, 'Price must be greater than 0'),
-      });
-
-      const { id } = paramsSchema.parse(request.params);
-      const { name, price } = bodySchema.parse(request.body);
+      const { id } = idParamSchema.parse(request.params);
+      const { name, price } = updateProductSchema.parse(request.body);
 
       // Validação para garantir que não exista dois produtos com o mesmo nome
       const [productWithSameName] = await knex<ProductRow>('products')
@@ -105,11 +88,7 @@ class ProductController {
 
   async remove(request: Request, response: Response, next: NextFunction) {
     try {
-      const paramsSchema = z.object({
-        id: z.coerce.number().int().positive('ID must be a positive integer'),
-      });
-
-      const { id } = paramsSchema.parse(request.params);
+      const { id } = idParamSchema.parse(request.params);
 
       const [deletedData] = await knex<ProductRow>('products')
         .where({ id })
