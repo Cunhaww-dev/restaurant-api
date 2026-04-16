@@ -1,10 +1,26 @@
 # Restaurant API
 
-API para gerenciamento de produtos, mesas, sessões de mesa e pedidos em um ambiente de restaurante.
+API REST para gerenciamento de produtos, mesas, sessões de mesa e pedidos em um restaurante.
 
-O projeto foi construído com Express, Knex e PostgreSQL. Atualmente a estrutura é direta, focada em entrega rápida e em apoio ao desenvolvimento de um front-end de tablet para pedidos na mesa.
+O projeto usa Node.js, Express, TypeScript, PostgreSQL, Knex, Zod e Swagger.
 
-## Começando
+## Requisitos
+
+- Node.js definido em `.nvmrc`
+- npm
+- PostgreSQL acessível por connection string
+- nvm recomendado para usar a versão correta do Node.js
+
+## Configuração inicial
+
+Use a versão de Node.js do projeto:
+
+```bash
+nvm install
+nvm use
+```
+
+O arquivo `.nvmrc` aponta para `lts/krypton`.
 
 Instale as dependências:
 
@@ -12,62 +28,69 @@ Instale as dependências:
 npm install
 ```
 
+Crie o arquivo de variáveis de ambiente:
+
+```bash
+cp .env.example .env
+```
+
+Configure a variável `DATABASE_URL` no arquivo `.env`:
+
+```env
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
+```
+
+O projeto está configurado para PostgreSQL com SSL, como no NeonDB. Caso use um banco local sem SSL, ajuste o `knexfile.ts` conforme necessário.
+
+## Banco de dados
+
+Execute as migrations para criar as tabelas:
+
+```bash
+npm run knex -- migrate:latest
+```
+
+Execute os seeds para inserir dados iniciais de desenvolvimento:
+
+```bash
+npm run knex -- seed:run
+```
+
+Os seeds criam produtos e mesas para facilitar testes locais.
+
+Para desfazer a última migration:
+
+```bash
+npm run knex -- migrate:rollback
+```
+
+## Rodando o projeto
+
 Inicie a API em modo de desenvolvimento:
 
 ```bash
 npm run dev
 ```
 
-A API será iniciada na porta `3333` e exibirá no terminal o link para acessar a documentação interativa do Swagger.
+Servidor:
 
-## Documentação da API
-
-Após iniciar o servidor, acesse a documentação completa do Swagger em:
-
+```text
+http://localhost:3333
 ```
+
+Documentação Swagger:
+
+```text
 http://localhost:3333/docs
 ```
 
-A documentação inclui todos os endpoints disponíveis com exemplos de requisições e respostas, facilitando a exploração e testes da API.
+Health check do banco:
 
-## Tecnologias Utilizadas
+```text
+GET http://localhost:3333/health/db
+```
 
-O projeto foi desenvolvido com as seguintes tecnologias e ferramentas:
-
-### Backend
-
-- **Node.js**: Runtime JavaScript para execução do servidor
-- **Express.js**: Framework HTTP minimalista para criar a API
-- **TypeScript**: Superset de JavaScript com tipagem estática
-
-### Banco de Dados
-
-- **PostgreSQL**: Sistema de gerenciamento de banco de dados relacional
-- **Knex.js**: Query builder SQL e migration tool
-- **Migrations**: Versionamento do schema do banco de dados
-
-### Validação e Tipagem
-
-- **Zod**: Validação de schemas em TypeScript com type inference
-- **TypeScript Types**: Tipagem forte dos dados do banco de dados
-
-### Documentação e Testing
-
-- **Swagger UI**: Interface interativa para exploração da API
-- **Zod OpenAPI**: Integração entre Zod schemas e especificação OpenAPI 3.0
-
-### Tooling
-
-- **tsx**: Executor de TypeScript sem compilação prévia
-- **npm**: Gerenciador de pacotes Node.js
-
-## Endpoints principais
-
-### Verificar conexão com o banco
-
-`GET /health/db`
-
-Resposta:
+Resposta esperada:
 
 ```json
 {
@@ -76,223 +99,230 @@ Resposta:
 }
 ```
 
-### Produtos
+## Scripts disponíveis
 
-`GET /products`
-
-Retorna a lista de produtos.
-
-`POST /products`
-
-Entrada:
-
-```json
-{
-  "name": "Pizza calabresa",
-  "price": 29.9
-}
+```bash
+npm run dev
 ```
 
-`PUT /products/:id`
+Inicia o servidor com `tsx watch`.
 
-Atualiza um produto existente.
+```bash
+npm run knex -- <comando>
+```
 
-`DELETE /products/:id`
+Executa comandos do Knex usando TypeScript.
 
-Remove um produto.
+Exemplos:
+
+```bash
+npm run knex -- migrate:latest
+npm run knex -- migrate:rollback
+npm run knex -- seed:run
+```
+
+No momento, o projeto não possui scripts de teste, build ou lint configurados.
+
+## Rotas principais
+
+### Health
+
+```http
+GET /health/db
+```
+
+Verifica se a API consegue conectar ao banco de dados.
+
+### Produtos
+
+```http
+GET /products
+GET /products?name=pizza
+POST /products
+PUT /products/:id
+DELETE /products/:id
+```
+
+Criar produto:
+
+```bash
+curl -X POST http://localhost:3333/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Pizza calabresa",
+    "price": 29.9
+  }'
+```
+
+Atualizar produto:
+
+```bash
+curl -X PUT http://localhost:3333/products/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Pizza portuguesa",
+    "price": 32.9
+  }'
+```
+
+Regras principais:
+
+- `name` deve ter pelo menos 5 caracteres
+- `price` deve ser maior que zero
+- nomes de produtos não podem se repetir
 
 ### Mesas
 
-`GET /tables`
+```http
+GET /tables
+```
 
-Retorna a lista de mesas cadastradas.
+Lista as mesas cadastradas, ordenadas por número.
 
 ### Sessões de mesa
 
-`GET /tables-sessions`
+```http
+GET /tables-sessions
+GET /tables-sessions?status=open
+GET /tables-sessions?status=closed&limit=10
+POST /tables-sessions
+PATCH /tables-sessions/:id
+```
 
-Lista sessões de mesa. É possível utilizar filtros opcionais de status e limite no controller quando necessário.
+Criar sessão para uma mesa:
 
-`POST /tables-sessions`
+```bash
+curl -X POST http://localhost:3333/tables-sessions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table_id": 1
+  }'
+```
 
-Cria uma nova sessão para uma mesa.
+Encerrar sessão:
 
-`PATCH /tables-sessions/:id`
+```bash
+curl -X PATCH http://localhost:3333/tables-sessions/1
+```
 
-Atualiza uma sessão de mesa existente.
+Regras principais:
+
+- uma mesa pode ter apenas uma sessão aberta por vez
+- sessões encerradas não podem ser encerradas novamente
+- `status` aceita `open` ou `closed`
+- `limit` deve ser um número positivo e no máximo `100`
 
 ### Pedidos
 
-`POST /orders`
+```http
+POST /orders
+GET /orders/table-session/:table_session_id
+GET /orders/table-session/:table_session_id/total
+```
 
-Cria um pedido associado a uma sessão de mesa. O corpo deve conter `table_session_id`, `product_id` e `quantity`.
+Criar pedido:
 
-Exemplo de entrada:
+```bash
+curl -X POST http://localhost:3333/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "table_session_id": 1,
+    "product_id": 3,
+    "quantity": 2
+  }'
+```
+
+Listar pedidos de uma sessão:
+
+```bash
+curl http://localhost:3333/orders/table-session/1
+```
+
+Consultar total da conta:
+
+```bash
+curl http://localhost:3333/orders/table-session/1/total
+```
+
+Resposta do total:
 
 ```json
 {
-  "table_session_id": 1,
-  "product_id": 3,
-  "quantity": 2
+  "total_amount": "59.80",
+  "total_items": "2"
 }
 ```
 
-`GET /orders/table-session/:table_session_id`
+Regras principais:
 
-Retorna os pedidos de uma sessão de mesa.
+- o pedido precisa estar vinculado a uma sessão de mesa existente
+- a sessão da mesa precisa estar aberta
+- o produto precisa existir
+- `quantity` deve ser um número inteiro positivo
+- `unit_price` é salvo no pedido para preservar o valor histórico mesmo se o preço do produto mudar depois
 
-Exemplo de resposta:
+## Fluxo básico para testar
 
-```json
-{
-  "orders": [
-    {
-      "id": 1,
-      "table_session_id": 1,
-      "product_id": 3,
-      "name": "Pizza calabresa",
-      "unit_price": "29.90",
-      "quantity": 2,
-      "total_price": "59.80",
-      "created_at": "2026-04-13T12:00:00.000Z",
-      "updated_at": "2026-04-13T12:00:00.000Z"
-    }
-  ]
-}
-```
+1. Execute migrations e seeds.
+2. Rode `npm run dev`.
+3. Verifique o banco com `GET /health/db`.
+4. Liste mesas com `GET /tables`.
+5. Crie uma sessão em `POST /tables-sessions`.
+6. Liste produtos com `GET /products`.
+7. Crie pedidos em `POST /orders`.
+8. Consulte a conta em `GET /orders/table-session/:table_session_id/total`.
+9. Encerre a sessão com `PATCH /tables-sessions/:id`.
 
-`GET /orders/table-session/:table_session_id/total`
+## Estrutura do projeto
 
-Retorna o total da conta para a sessão de mesa.
-
-## Organização atual do código
-
-A arquitetura do projeto segue uma estrutura camada por tipos de recurso:
-
-```
+```text
 src/
-  server.ts                 # Inicialização da aplicação Express
-  routes/                   # Definição de todas as rotas
-    index.ts               # Agregação de rotas
-    products-routes.ts     # Rotas de produtos
-    orders-routes.ts       # Rotas de pedidos
-    tables-routes.ts       # Rotas de mesas
-    tables-session-routes.ts # Rotas de sessões de mesa
-  controllers/              # Lógica de controle das requisições
-    product-controller.ts
-    orders-controller.ts
-    tables-controller.ts
-    tables-sessions-controller.ts
-  database/                 # Configuração e migrations
-    knex.ts               # Instância do Knex
-    migrations/           # Versionamento do banco de dados
-    seeds/                # Dados iniciais para desenvolvimento
-    types/                # Tipos das tabelas do banco
-  middlewares/              # Middleware de processamento
-    error-handling.ts     # Tratamento centralizado de erros
-  schemas/                  # Validação com Zod
-    product/
-    order/
-    tables-sessions/
-    common/
-  utils/                    # Utilitários gerais
-    AppError.ts           # Classe de erro personalizada
-    swagger-constants.ts  # Constantes para tipagem do Swagger
-  docs/                     # Documentação
-    swagger/              # Configuração e paths do Swagger
-      paths/              # Definição de endpoints
+  server.ts
+  routes/
+  controllers/
+  schemas/
+  database/
+    migrations/
+    seeds/
+    types/
+  middlewares/
+  utils/
+  docs/
+    swagger/
+      paths/
 ```
 
-### Responsabilidades atuais por camada
+Responsabilidades:
 
-- **Controllers**: Recebem requisições, validam dados, chamam lógica de negócio e retornam respostas
-- **Routes**: Definem os endpoints e mapeiam para os controllers
-- **Database**: Abstração de acesso aos dados via Knex
-- **Middlewares**: Tratamento de erros e crossing concerns
-- **Schemas**: Validação de entrada de dados com Zod
+- `server.ts`: inicializa o Express, rotas, Swagger e middleware de erro
+- `routes`: define os endpoints da API
+- `controllers`: recebe requisições, valida dados, executa regras atuais e responde ao cliente
+- `schemas`: valida entradas com Zod
+- `database`: configura Knex, migrations, seeds e tipos das tabelas
+- `middlewares`: centraliza tratamentos compartilhados, como erros
+- `docs/swagger`: define a documentação OpenAPI exibida em `/docs`
 
-## Arquitetura futura
+## Documentação da API
 
-O projeto evoluirá para uma arquitetura com separação clara de responsabilidades, implementando:
+A documentação interativa fica disponível em:
 
-### Camada de Service
-
-A camada de Service conterá toda a lógica de negócio da aplicação. Isso inclui:
-
-- Regras de validação complexas
-- Cálculos e transformações de dados
-- Orquestração entre diferentes repositórios
-- Implementação de casos de uso específicos do domínio
-
-Exemplo:
-
-```typescript
-// src/services/orders/create-order.service.ts
-export class CreateOrderService {
-  async execute(data: CreateOrderDTO): Promise<Order> {
-    // Validação de regras de negócio
-    // Cálcula valores
-    // Chama repositórios conforme necessário
-    // Retorna resultado
-  }
-}
+```text
+http://localhost:3333/docs
 ```
 
-### Camada de Repository
+Ela é gerada com Swagger UI e Zod OpenAPI. Sempre que uma rota, schema ou resposta mudar, atualize também os arquivos em `src/docs/swagger/paths`.
 
-A camada de Repository será responsável exclusivamente pelo acesso aos dados:
+## Próximos passos recomendados
 
-- Operações CRUD (Create, Read, Update, Delete)
-- Queries complexas ao banco de dados
-- Abstração do Knex
-- Nenhuma lógica de negócio
-
-Exemplo:
-
-```typescript
-// src/repositories/products/products.repository.ts
-export class ProductsRepository {
-  async findAll(): Promise<Product[]> {}
-  async findById(id: number): Promise<Product | null> {}
-  async create(data: CreateProductDTO): Promise<Product> {}
-  async update(id: number, data: UpdateProductDTO): Promise<Product> {}
-  async delete(id: number): Promise<void> {}
-}
-```
-
-### Benefícios da refatoração
-
-- **Responsabilidade única**: Cada arquivo tem uma única razão para mudar
-- **Testabilidade**: Services podem ser testadas independentemente de Controllers
-- **Reutilização**: Services podem ser usadas por múltiplos Controllers
-- **Manutenção**: Código mais organizado e fácil de entender
-- **Escalabilidade**: Estrutura preparada para crescimento do projeto
-
-## Notas de evolução
-
-O projeto está em evolução ativa e está alinhado com os seguintes objetivos:
-
-### Curto prazo
-
-- Implementação completa da separação em camadas (Service e Repository)
-- Testes unitários para Services
-- Testes de integração para endpoints
-
-### Médio prazo
-
-- Rota para clientes (tablet na mesa)
-  - Permite que clientes façam pedidos diretamente
-  - Consulta de conta em tempo real
-  - Solicitação de garçom
-
-### Longo prazo
-
-- Implementação de sistema de autenticação e autorização
-- Integração com sistema de pagamento
-- Relatórios e analytics
-- Cache distribuído
-- Mensageria assíncrona para notificações
+- Adicionar script de `build` para validar compilação TypeScript.
+- Adicionar script de `test` e cobrir regras de produtos, sessões e pedidos.
+- Adicionar script de `lint` ou formatação para padronizar o código.
+- Separar regras de negócio em services.
+- Separar acesso ao banco em repositories.
+- Documentar respostas de erro padronizadas no Swagger.
+- Criar ambiente Docker para PostgreSQL local.
+- Avaliar autenticação e autorização antes de expor rotas administrativas.
 
 ## Observações
 
-A versão atual do projeto é funcional e pronta para desenvolvimento. A arquitetura foi inicialmente simplificada para permitir entrega rápida, mas já contempla a evolução para uma estrutura mais robusta e escalável com a implementação das camadas de Service e Repository.
+Esta API está pronta para desenvolvimento local e testes de integração com um front-end. A estrutura atual é simples de propósito: as rotas chamam controllers, os controllers validam com Zod e acessam o banco via Knex. Conforme o projeto crescer, a separação em services e repositories deve ajudar na manutenção e nos testes.
