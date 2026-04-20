@@ -7,7 +7,7 @@ import {
 } from '@/utils/swagger-constants';
 
 export const tableSessionPaths = {
-  '/table-sessions': {
+  '/tables-sessions': {
     get: {
       tags: ['Table Sessions'],
       summary: 'List table sessions',
@@ -54,38 +54,19 @@ export const tableSessionPaths = {
           description: 'Table session created',
         },
         400: {
-          description: 'Validation error',
+          description: 'Table already has an open session',
         },
       },
     },
   },
 
-  '/table-sessions/{table_session_id}': {
-    get: {
-      tags: ['Table Sessions'],
-      summary: 'Get table session summary',
-      parameters: [
-        {
-          name: 'table_session_id',
-          in: PATH,
-          required: true,
-          schema: {
-            type: NUMBER_TYPE,
-          },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Session summary',
-        },
-      },
-    },
+  '/tables-sessions/{id}': {
     patch: {
       tags: ['Table Sessions'],
-      summary: 'Update a table session',
+      summary: 'Close a table session',
       parameters: [
         {
-          name: 'table_session_id',
+          name: 'id',
           in: PATH,
           required: true,
           schema: {
@@ -93,20 +74,12 @@ export const tableSessionPaths = {
           },
         },
       ],
-      requestBody: {
-        required: true,
-        content: {
-          'application/json': {
-            schema: createTableSessionSchema,
-          },
-        },
-      },
       responses: {
         200: {
-          description: 'Table session updated successfully',
+          description: 'Table session closed successfully',
         },
         400: {
-          description: 'Validation error',
+          description: 'Table session is already closed',
         },
         404: {
           description: 'Table session not found',
