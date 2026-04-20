@@ -2,128 +2,52 @@
 
 API REST para gerenciamento de produtos, mesas, sessões de mesa e pedidos em um restaurante.
 
-O projeto usa Node.js, Express, TypeScript, PostgreSQL, Knex, Zod e Swagger.
+Stack: Node.js, Express 5, TypeScript, PostgreSQL, Knex, Zod, Swagger UI.
 
 ## Requisitos
 
-- Node.js definido em `.nvmrc`
+- Node.js definido em `.nvmrc` (`lts/krypton`)
 - npm
 - PostgreSQL acessível por connection string
 - nvm recomendado para usar a versão correta do Node.js
 
 ## Configuração inicial
 
-Use a versão de Node.js do projeto:
-
 ```bash
-nvm install
-nvm use
-```
-
-O arquivo `.nvmrc` aponta para `lts/krypton`.
-
-Instale as dependências:
-
-```bash
+nvm install && nvm use
 npm install
-```
-
-Crie o arquivo de variáveis de ambiente:
-
-```bash
 cp .env.example .env
 ```
 
-Configure a variável `DATABASE_URL` no arquivo `.env`:
+Configure a variável `DATABASE_URL` no `.env`:
 
 ```env
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 ```
 
-O projeto está configurado para PostgreSQL com SSL, como no NeonDB. Caso use um banco local sem SSL, ajuste o `knexfile.ts` conforme necessário.
+O projeto está configurado para PostgreSQL com SSL (ex: NeonDB). Para banco local sem SSL, ajuste o `knexfile.ts`.
 
 ## Banco de dados
 
-Execute as migrations para criar as tabelas:
-
 ```bash
-npm run knex -- migrate:latest
-```
-
-Execute os seeds para inserir dados iniciais de desenvolvimento:
-
-```bash
-npm run knex -- seed:run
-```
-
-Os seeds criam produtos e mesas para facilitar testes locais.
-
-Para desfazer a última migration:
-
-```bash
-npm run knex -- migrate:rollback
+npm run knex -- migrate:latest   # cria as tabelas
+npm run knex -- seed:run         # insere produtos e mesas para testes
+npm run knex -- migrate:rollback # desfaz a última migration
 ```
 
 ## Rodando o projeto
 
-Inicie a API em modo de desenvolvimento:
-
 ```bash
 npm run dev
 ```
 
-Servidor:
+| Recurso | URL |
+|---|---|
+| API | `http://localhost:3333` |
+| Swagger UI | `http://localhost:3333/swagger` |
+| Health check | `GET http://localhost:3333/health/db` |
 
-```text
-http://localhost:3333
-```
-
-Documentação Swagger:
-
-```text
-http://localhost:3333/docs
-```
-
-Health check do banco:
-
-```text
-GET http://localhost:3333/health/db
-```
-
-Resposta esperada:
-
-```json
-{
-  "status": "ok",
-  "database": "connected"
-}
-```
-
-## Scripts disponíveis
-
-```bash
-npm run dev
-```
-
-Inicia o servidor com `tsx watch`.
-
-```bash
-npm run knex -- <comando>
-```
-
-Executa comandos do Knex usando TypeScript.
-
-Exemplos:
-
-```bash
-npm run knex -- migrate:latest
-npm run knex -- migrate:rollback
-npm run knex -- seed:run
-```
-
-No momento, o projeto não possui scripts de teste, build ou lint configurados.
-
-## Rotas principais
+## Rotas
 
 ### Health
 
@@ -131,45 +55,19 @@ No momento, o projeto não possui scripts de teste, build ou lint configurados.
 GET /health/db
 ```
 
-Verifica se a API consegue conectar ao banco de dados.
-
 ### Produtos
 
 ```http
-GET /products
-GET /products?name=pizza
-POST /products
-PUT /products/:id
+GET    /products
+GET    /products?name=pizza
+POST   /products
+PUT    /products/:id
 DELETE /products/:id
 ```
 
-Criar produto:
-
-```bash
-curl -X POST http://localhost:3333/products \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Pizza calabresa",
-    "price": 29.9
-  }'
-```
-
-Atualizar produto:
-
-```bash
-curl -X PUT http://localhost:3333/products/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Pizza portuguesa",
-    "price": 32.9
-  }'
-```
-
-Regras principais:
-
-- `name` deve ter pelo menos 5 caracteres
-- `price` deve ser maior que zero
-- nomes de produtos não podem se repetir
+Regras:
+- `name` mínimo 5 caracteres, único (case-insensitive)
+- `price` maior que zero
 
 ### Mesas
 
@@ -177,72 +75,33 @@ Regras principais:
 GET /tables
 ```
 
-Lista as mesas cadastradas, ordenadas por número.
-
 ### Sessões de mesa
 
 ```http
-GET /tables-sessions
-GET /tables-sessions?status=open
-GET /tables-sessions?status=closed&limit=10
-POST /tables-sessions
+GET   /tables-sessions
+GET   /tables-sessions?status=open
+GET   /tables-sessions?status=closed&limit=10
+POST  /tables-sessions
 PATCH /tables-sessions/:id
 ```
 
-Criar sessão para uma mesa:
-
-```bash
-curl -X POST http://localhost:3333/tables-sessions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "table_id": 1
-  }'
-```
-
-Encerrar sessão:
-
-```bash
-curl -X PATCH http://localhost:3333/tables-sessions/1
-```
-
-Regras principais:
-
-- uma mesa pode ter apenas uma sessão aberta por vez
-- sessões encerradas não podem ser encerradas novamente
-- `status` aceita `open` ou `closed`
-- `limit` deve ser um número positivo e no máximo `100`
+Regras:
+- Uma mesa só pode ter uma sessão aberta por vez
+- Sessão já encerrada não pode ser encerrada novamente
+- `status`: `open` ou `closed` — `limit`: máximo 100, padrão 50
 
 ### Pedidos
 
 ```http
 POST /orders
-GET /orders/table-session/:table_session_id
-GET /orders/table-session/:table_session_id/total
+GET  /orders/table-session/:table_session_id
+GET  /orders/table-session/:table_session_id/total
 ```
 
-Criar pedido:
-
-```bash
-curl -X POST http://localhost:3333/orders \
-  -H "Content-Type: application/json" \
-  -d '{
-    "table_session_id": 1,
-    "product_id": 3,
-    "quantity": 2
-  }'
-```
-
-Listar pedidos de uma sessão:
-
-```bash
-curl http://localhost:3333/orders/table-session/1
-```
-
-Consultar total da conta:
-
-```bash
-curl http://localhost:3333/orders/table-session/1/total
-```
+Regras:
+- A sessão de mesa precisa existir e estar aberta
+- O produto precisa existir
+- `unit_price` é capturado no momento do pedido — mudanças futuras no preço do produto não afetam pedidos já criados
 
 Resposta do total:
 
@@ -253,76 +112,58 @@ Resposta do total:
 }
 ```
 
-Regras principais:
+## Fluxo básico
 
-- o pedido precisa estar vinculado a uma sessão de mesa existente
-- a sessão da mesa precisa estar aberta
-- o produto precisa existir
-- `quantity` deve ser um número inteiro positivo
-- `unit_price` é salvo no pedido para preservar o valor histórico mesmo se o preço do produto mudar depois
+1. `npm run knex -- migrate:latest && npm run knex -- seed:run`
+2. `npm run dev`
+3. `GET /health/db` — confirma conexão com banco
+4. `GET /tables` — escolhe uma mesa
+5. `POST /tables-sessions` — abre sessão para a mesa
+6. `GET /products` — lista produtos disponíveis
+7. `POST /orders` — registra pedidos
+8. `GET /orders/table-session/:id/total` — consulta conta
+9. `PATCH /tables-sessions/:id` — encerra sessão
 
-## Fluxo básico para testar
-
-1. Execute migrations e seeds.
-2. Rode `npm run dev`.
-3. Verifique o banco com `GET /health/db`.
-4. Liste mesas com `GET /tables`.
-5. Crie uma sessão em `POST /tables-sessions`.
-6. Liste produtos com `GET /products`.
-7. Crie pedidos em `POST /orders`.
-8. Consulte a conta em `GET /orders/table-session/:table_session_id/total`.
-9. Encerre a sessão com `PATCH /tables-sessions/:id`.
-
-## Estrutura do projeto
+## Estrutura
 
 ```text
 src/
-  server.ts
-  routes/
-  controllers/
-  schemas/
+  server.ts          # Express, Swagger, rotas, middleware de erro
+  routes/            # Endpoints e mapeamento para controllers
+  controllers/       # Validação HTTP (Zod) + chamada ao service
+  services/          # Regras de negócio e AppError
+  schemas/           # Schemas Zod por domínio
   database/
-    migrations/
-    seeds/
-    types/
-  middlewares/
-  utils/
-  docs/
-    swagger/
-      paths/
+    knex.ts          # Instância Knex
+    migrations/      # Migrations com timestamp
+    seeds/           # Dados iniciais de desenvolvimento
+    types/           # Tipos TypeScript das tabelas (*Row, *Insert)
+  middlewares/       # Tratamento centralizado de erros
+  utils/             # AppError, constantes Swagger
+  docs/swagger/      # Documento OpenAPI e paths por domínio
 ```
 
-Responsabilidades:
+## Documentação interativa
 
-- `server.ts`: inicializa o Express, rotas, Swagger e middleware de erro
-- `routes`: define os endpoints da API
-- `controllers`: recebe requisições, valida dados, executa regras atuais e responde ao cliente
-- `schemas`: valida entradas com Zod
-- `database`: configura Knex, migrations, seeds e tipos das tabelas
-- `middlewares`: centraliza tratamentos compartilhados, como erros
-- `docs/swagger`: define a documentação OpenAPI exibida em `/docs`
+Disponível em `http://localhost:3333/swagger` após subir o servidor.
 
-## Documentação da API
+Ao alterar rotas, schemas ou respostas, atualize os arquivos em `src/docs/swagger/paths/`.
 
-A documentação interativa fica disponível em:
+## Decisão de arquitetura: sem camada de repositories
 
-```text
-http://localhost:3333/docs
-```
+O projeto usa a arquitetura **Controllers → Services → Knex** de forma intencional, sem uma camada de repositories entre services e banco.
 
-Ela é gerada com Swagger UI e Zod OpenAPI. Sempre que uma rota, schema ou resposta mudar, atualize também os arquivos em `src/docs/swagger/paths`.
+Repositories fariam sentido se:
+- O ORM/query builder pudesse ser trocado (Knex já é a abstração sobre SQL)
+- Houvesse uma suite de testes unitários que precisasse mockar o banco
+- Os domínios fossem complexos o suficiente para justificar agregados com múltiplas tabelas
+
+Neste projeto, os repositories seriam wrappers finos em torno do Knex sem lógica própria, adicionando arquivos e indireção sem benefício real. As queries PostgreSQL-específicas (`RETURNING *`, `whereRaw`, `COALESCE`) quebrariam de qualquer forma em uma eventual troca de banco. Quando testes forem introduzidos, a camada de repositories pode ser adicionada para viabilizar mocks.
 
 ## Próximos passos recomendados
 
-- Adicionar script de `build` para validar compilação TypeScript.
-- Adicionar script de `test` e cobrir regras de produtos, sessões e pedidos.
-- Adicionar script de `lint` ou formatação para padronizar o código.
-- Separar regras de negócio em services.
-- Separar acesso ao banco em repositories.
-- Documentar respostas de erro padronizadas no Swagger.
-- Criar ambiente Docker para PostgreSQL local.
-- Avaliar autenticação e autorização antes de expor rotas administrativas.
-
-## Observações
-
-Esta API está pronta para desenvolvimento local e testes de integração com um front-end. A estrutura atual é simples de propósito: as rotas chamam controllers, os controllers validam com Zod e acessam o banco via Knex. Conforme o projeto crescer, a separação em services e repositories deve ajudar na manutenção e nos testes.
+- Adicionar script de `build` para validar compilação TypeScript
+- Adicionar script de `test` com cobertura de regras de negócio nos services
+- Adicionar script de `lint` para padronizar o código
+- Criar ambiente Docker para PostgreSQL local
+- Avaliar autenticação e autorização antes de expor rotas administrativas
