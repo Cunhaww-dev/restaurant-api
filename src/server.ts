@@ -16,6 +16,6 @@ app.use(errorHandlingMiddleware);
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(
-    `Swagger documentation available at http://localhost:${PORT}/docs`,
+    `Swagger documentation available at http://localhost:${PORT}/swagger`,
   );
 });
