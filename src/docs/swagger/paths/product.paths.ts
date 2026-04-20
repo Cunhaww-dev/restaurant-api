@@ -1,12 +1,23 @@
 import { createProductSchema } from '@/schemas/product/create-product.schema';
 import { updateProductSchema } from '@/schemas/product/update-product.schema';
-import { PATH, NUMBER_TYPE } from '@/utils/swagger-constants';
+import { PATH, QUERY, NUMBER_TYPE, STRING_TYPE } from '@/utils/swagger-constants';
 
 export const productPaths = {
   '/products': {
     get: {
       tags: ['Products'],
       summary: 'List all products',
+      parameters: [
+        {
+          name: 'name',
+          in: QUERY,
+          required: false,
+          schema: {
+            type: STRING_TYPE,
+          },
+          description: 'Filter products by name (partial match)',
+        },
+      ],
       responses: {
         200: {
           description: 'List of products',
@@ -29,7 +40,7 @@ export const productPaths = {
           description: 'Product created successfully',
         },
         400: {
-          description: 'Bad request',
+          description: 'Product name already exists',
         },
       },
     },
@@ -61,7 +72,7 @@ export const productPaths = {
           description: 'Product updated successfully',
         },
         400: {
-          description: 'Bad request',
+          description: 'Product name already in use',
         },
         404: {
           description: 'Product not found',
@@ -82,7 +93,7 @@ export const productPaths = {
         },
       ],
       responses: {
-        204: {
+        200: {
           description: 'Product deleted successfully',
         },
         404: {

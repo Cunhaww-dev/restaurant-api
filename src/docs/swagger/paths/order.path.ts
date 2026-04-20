@@ -1,5 +1,5 @@
 import { createOrderSchema } from '@/schemas/order/create-order.schema';
-import { PATH, NUMBER_TYPE } from '@/utils/swagger-constants';
+import { PATH, NUMBER_TYPE, OBJECT_TYPE } from '@/utils/swagger-constants';
 
 export const orderPaths = {
   '/orders/table-session/{table_session_id}': {
@@ -41,6 +41,17 @@ export const orderPaths = {
       responses: {
         200: {
           description: 'Total amount for the session',
+          content: {
+            'application/json': {
+              schema: {
+                type: OBJECT_TYPE,
+                properties: {
+                  total_amount: { type: NUMBER_TYPE },
+                  total_items: { type: NUMBER_TYPE },
+                },
+              },
+            },
+          },
         },
         404: {
           description: 'Table session not found',
@@ -66,7 +77,10 @@ export const orderPaths = {
           description: 'Order created successfully',
         },
         400: {
-          description: 'Validation error',
+          description: 'Table session is already closed',
+        },
+        404: {
+          description: 'Table session or product not found',
         },
       },
     },
